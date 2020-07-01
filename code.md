@@ -1,25 +1,8 @@
----
-title: "Ivermectin exploration"
-date: "`r Sys.Date()`"
-output: github_document
----
+Ivermectin exploration
+================
+2020-07-01
 
-
-```{r setup, include=FALSE, echo = FALSE}
-# Basic knitr options
-library(knitr)
-opts_chunk$set(comment = NA, 
-               echo = TRUE,
-               warning = FALSE, 
-               message = FALSE, 
-               error = TRUE, 
-               cache = FALSE,
-               fig.width = 9.64,
-               fig.height = 5.9,
-               fig.path = 'figures/')
-```
-
-```{r}
+``` r
 ## Load libraries
 library(ggplot2)
 library(lubridate)
@@ -34,7 +17,7 @@ library(xml2)
 options(scipen = '999')
 ```
 
-```{r}
+``` r
 # Read in data
 cl0 <- read_excel('data/country list.xlsx')
 cl1 <- read_excel('data/country list (1).xlsx')
@@ -44,7 +27,7 @@ lf <- read_excel('data/LF_data.xlsx')
 owid <- read_csv('https://covid.ourworldindata.org/data/owid-covid-data.csv')
 ```
 
-```{r}
+``` r
 # Define which countries are PCT, etc. Only using Africa
 african_countries <- sort(unique(c(cl0$Ivermectin,
                                  cl0$`Other PCT treatment`,
@@ -82,7 +65,7 @@ africa <- africa %>%
                            'Ivory Coast' = 'Cote d\'Ivoire'))
 ```
 
-```{r}
+``` r
 # Reformat data for better plotting
 pd <- owid %>% left_join(africa,
                          by = c('location'='country')) %>%
@@ -111,9 +94,11 @@ ggplot(data = pd,
        subtitle = paste0('Data through ', max(pd$date)))
 ```
 
+![](figures/unnamed-chunk-4-1.png)<!-- -->
+
 # Plot improvement
 
-```{r}
+``` r
 library(ggridges)
 ggplot(data = pd) +
   geom_density_ridges(
@@ -128,7 +113,9 @@ ggplot(data = pd) +
   theme(legend.position = 'none')
 ```
 
-```{r}
+![](figures/unnamed-chunk-5-1.png)<!-- -->
+
+``` r
 ggplot(data = pd,
        aes(x = Treatment,
            y = ci)) +
@@ -143,8 +130,9 @@ ggplot(data = pd,
   theme(legend.position = 'none')
 ```
 
+![](figures/unnamed-chunk-6-1.png)<!-- -->
 
-```{r}
+``` r
 library(ggrepel)
 ggplot(data = pd,
        aes(x = Treatment,
@@ -163,12 +151,15 @@ ggplot(data = pd,
                   size = 4)
 ```
 
+![](figures/unnamed-chunk-7-1.png)<!-- -->
+
 ## Discussion
 
-All of the above distributions weight each country equally, even though countries have far different population sizes. Population sizes shown below
+All of the above distributions weight each country equally, even though
+countries have far different population sizes. Population sizes shown
+below
 
-
-```{r}
+``` r
 library(ggrepel)
 ggplot(data = pd,
        aes(x = Treatment,
@@ -190,9 +181,11 @@ ggplot(data = pd,
   scale_y_log10()
 ```
 
-Another way to look at population...
+![](figures/unnamed-chunk-8-1.png)<!-- -->
 
-```{r}
+Another way to look at population…
+
+``` r
 ggplot(data = pd,
        aes(x = population,
            y = ci,
@@ -209,11 +202,22 @@ ggplot(data = pd,
                   size = 4)
 ```
 
-Maybe we just need a simple multivariate model. Does being of one type of "treatment" predict cumulative incidence?
+![](figures/unnamed-chunk-9-1.png)<!-- -->
 
-```{r}
+Maybe we just need a simple multivariate model. Does being of one type
+of “treatment” predict cumulative incidence?
+
+``` r
 fit <- lm(ci ~ Treatment, data = pd)
 broom::tidy(summary(fit))
 ```
 
-In the above, the reference class is ivermectin. Cumulative invidence is greater in the other two groups, p > 0.05.
+    # A tibble: 3 x 5
+      term               estimate std.error statistic p.value
+      <chr>                 <dbl>     <dbl>     <dbl>   <dbl>
+    1 (Intercept)           2126.     1811.      1.17  0.246 
+    2 TreatmentOther PCT    9214.     5330.      1.73  0.0897
+    3 TreatmentNo PCT       4423.     2407.      1.84  0.0717
+
+In the above, the reference class is ivermectin. Cumulative invidence is
+greater in the other two groups, p \> 0.05.
