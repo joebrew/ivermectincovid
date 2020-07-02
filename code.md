@@ -1,6 +1,6 @@
 Ivermectin exploration
 ================
-2020-07-01
+2020-07-02
 
 ``` r
 ## Load libraries
@@ -74,7 +74,7 @@ pd <- owid %>% left_join(africa,
 # Get cumulative incidence per 100k
 pd <- pd %>%
   filter(date == max(date)) %>%
-  mutate(ci = total_cases_per_million * 10)
+  mutate(ci = total_cases_per_million / 10)
 
 # Relevel
 pd$Treatment <- factor(pd$key,
@@ -87,11 +87,13 @@ pd$Treatment <- factor(pd$key,
 ggplot(data = pd,
        aes(x = Treatment,
            y = ci)) +
-  geom_boxplot() +
+  geom_boxplot(outlier.shape = 1) +
   cowplot::theme_cowplot() +
   labs(y = 'Incidence (cases/100k)',
        title = 'Plot reproduction: Africa only',
-       subtitle = paste0('Data through ', max(pd$date)))
+       subtitle = paste0('Data through ', max(pd$date))) +
+  ylim(0, 670) +
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1))
 ```
 
 ![](figures/unnamed-chunk-4-1.png)<!-- -->
@@ -148,7 +150,7 @@ ggplot(data = pd,
   theme(legend.position = 'none') +
   geom_text_repel(aes(label = location),
                   alpha = 0.5,
-                  size = 4)
+                  size = 3)
 ```
 
 ![](figures/unnamed-chunk-7-1.png)<!-- -->
@@ -177,7 +179,7 @@ ggplot(data = pd,
   theme(legend.position = 'none') +
   geom_text_repel(aes(label = location),
                   alpha = 0.5,
-                  size = 4) +
+                  size = 3) +
   scale_y_log10()
 ```
 
@@ -186,6 +188,7 @@ ggplot(data = pd,
 Another way to look at population…
 
 ``` r
+log_seq <-  c(100000, 1000000, 10000000, 100000000)
 ggplot(data = pd,
        aes(x = population,
            y = ci,
@@ -193,13 +196,15 @@ ggplot(data = pd,
   geom_point() +
     cowplot::theme_cowplot() +
   labs(y = 'Incidence (cases/100k)',
+       x = 'Population',
        title = 'Population and cumulative incidence on log scale',
        subtitle = paste0('Data through ', max(pd$date))) +
+  scale_x_log10(breaks = log_seq,
+                labels = scales::comma(log_seq)) +
   scale_y_log10() +
-  scale_x_log10() +
     geom_text_repel(aes(label = location),
                   alpha = 0.5,
-                  size = 4)
+                  size = 4) 
 ```
 
 ![](figures/unnamed-chunk-9-1.png)<!-- -->
@@ -215,9 +220,9 @@ broom::tidy(summary(fit))
     # A tibble: 3 x 5
       term               estimate std.error statistic p.value
       <chr>                 <dbl>     <dbl>     <dbl>   <dbl>
-    1 (Intercept)           2126.     1811.      1.17  0.246 
-    2 TreatmentOther PCT    9214.     5330.      1.73  0.0897
-    3 TreatmentNo PCT       4423.     2407.      1.84  0.0717
+    1 (Intercept)            21.5      18.4      1.17  0.246 
+    2 TreatmentOther PCT     92.1      54.0      1.70  0.0941
+    3 TreatmentNo PCT        45.8      24.4      1.88  0.0660
 
 In the above, the reference class is ivermectin. Cumulative invidence is
 greater in the other two groups, p \> 0.05.
